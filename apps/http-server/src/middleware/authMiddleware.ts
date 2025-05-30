@@ -1,15 +1,27 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken'
 
+interface UserType {
+    id: string;
+    email: string;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: UserType;
+    }
+  }
+}
+
+
 export const auth = async ( req:Request, res: Response, next: NextFunction ) => {
     try{
         //Extract JWT from request cookies
         const token = 
             req.cookies.token ||
-            req.body.token || 
-            req.header("Authorization").replace("Bearer ", "");
+            (req.header("Authorization") ? req.header("Authorization")!.replace("Bearer ", "") : "");
             
-
         //If JWT is missing return error
         if(!token){
             return res.status(401).json({
@@ -19,8 +31,16 @@ export const auth = async ( req:Request, res: Response, next: NextFunction ) => 
         }
         try{
             //Verify the token using secret key stored in environment variables
-            const decode = await jwt.verify(token, process.env.JWT_SECRET)
-            console.log(decode)
+            const jwtSecret = process.env.JWT_SECRET;
+            if (!jwtSecret) {
+                return res.status(500).json({
+                    success: false,
+                    message: "JWT secret is not defined in environment variables"
+                });
+            }
+            const decode = jwt.verify(token, jwtSecret as string);
+            console.log("Decode -> ", decode)
+            //@ts-ignore
             req.user = decode
 
         }catch(error){

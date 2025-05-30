@@ -1,6 +1,6 @@
 import User from "../models/User"
 import bcrypt from 'bcrypt'
-import { Request, RequestHandler, Response } from "express"
+import { RequestHandler } from "express"
 import jwt from "jsonwebtoken"
 import {SignInSchema, SignUpSchema } from "@repo/types/zodTypes"
 
@@ -55,68 +55,70 @@ export const signUp: RequestHandler = async (req, res) => {
     }
 }
 
-export const login = async (req: Request,res: Response)=>{
-    try{
-        const parsedData = SignInSchema.safeParse(req.body)
+export const login: RequestHandler = async (req, res) => {
+    try {
+        const parsedData = SignInSchema.safeParse(req.body);
 
         if (!parsedData.success) {
-            return res.status(411).json({
+            res.status(411).json({
                 success: false,
                 message: "Zod validation Failed"
             });
+            return;
         }
 
         const {
             email, password
-        } = parsedData.data
+        } = parsedData.data;
 
         //Check in the Database wther user is present or not
-        const user = await User.findOne({email})
+        const user = await User.findOne({ email });
 
         //If not found return error
-        if(!user){
-            return res.status(400).json({
-                success:false,
+        if (!user) {
+            res.status(400).json({
+                success: false,
                 message: "User For the Email Not Found"
-            })
-            
+            });
+            return;
         }
 
         //Generate the JWT token and Compare the Password
-        if(await bcrypt.compare(password, user.password)){
-            const token = jwt.sign({
-                email: user.email,
-                id: user._id,
-            }, process.env.JWT_SECRET || 'bikash',
-            {
-                expiresIn: "24h"
-            }
-        )
-        const options = {
-            expires: new Date(Date.now() + 3*24*60*60*1000),
-            httpOnly: true
-        }
-        res.cookie("token", token , options).status(200).json({
-            success:true,
-            token,
-            user,
-            message: "User Login Success"
-        })
-        console.log(res)
-        }
-        else{
-            return res.status(401).json({
-                success:false,
+        if (await bcrypt.compare(password, user.password)) {
+            const token = jwt.sign(
+                {
+                    email: user.email,
+                    id: user._id,
+                },
+                process.env.JWT_SECRET || 'bikash',
+                {
+                    expiresIn: "24h"
+                }
+            );
+            const options = {
+                expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+                httpOnly: true
+            };
+            res.cookie("token", token, options).status(200).json({
+                success: true,
+                message: "User Login Success"
+            });
+            return;
+        } else {
+            res.status(401).json({
+                success: false,
                 message: "Wrong Password"
-            })
+            });
+            return;
         }
     }
-    catch(error){
-        console.log(error)
-        return res.status(500).json({
-            success:false,
+    catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
             message: "User cannot be Logged In"
-        })
+        });
+        return;
     }
-}
+};
 
