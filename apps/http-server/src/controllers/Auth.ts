@@ -1,30 +1,31 @@
 import User from "../models/User"
 import bcrypt from 'bcrypt'
-import { Request, Response } from "express"
+import { Request, RequestHandler, Response } from "express"
 import jwt from "jsonwebtoken"
 import {SignInSchema, SignUpSchema } from "@repo/types/zodTypes"
 
-exports.signUp = async (req: Request,res: Response)=>{
-    try{
-        const parsedData = SignUpSchema.safeParse(req.body)
-        if(!parsedData.success){
+export const signUp: RequestHandler = async (req, res) => {
+    try {
+        const parsedData = SignUpSchema.safeParse(req.body);
+        if (!parsedData.success) {
             res.status(411).json({
                 success: false,
                 message: "Zod validation Failed"
-            })
-            return
+            });
+            return;
         }
         const {
             email, firstName, lastName, password, confirmPassword
-        } = parsedData.data
+        } = parsedData.data;
 
         //Check if User already exists
-        const extistingUser = await User.findOne({email})
-        if(extistingUser){
-            return res.status(400).json({
-                success:false,
+        const extistingUser = await User.findOne({ email });
+        if (extistingUser) {
+            res.status(400).json({
+                success: false,
                 message: "User already exists. Please Login"
-            })
+            });
+            return;
         }
 
         //Hash the password
@@ -36,40 +37,38 @@ exports.signUp = async (req: Request,res: Response)=>{
             lastName,
             email,
             password: hashedPassword
-        })
-        
+        });
+
         //Return the response
-        return res.status(200).json({
-            success:true,
+        res.status(200).json({
+            success: true,
             user,
             message: "User Registered Successfully"
-        })
+        });
     }
-    catch(error){
-        console.log(error)
-        return res.status(500).json({
-            success:false,
+    catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
             message: "User cannot be Registered"
-        })
+        });
     }
 }
 
-exports.login = async (req: Request,res: Response)=>{
+export const login = async (req: Request,res: Response)=>{
     try{
-        //get the Data from Request
-        const {
-            email,
-            password,
-            role,
-        } = req.body
+        const parsedData = SignInSchema.safeParse(req.body)
 
-        //Check whether all details are present or not
-        if(!email || !password ){
-            return res.status(400).json({
-                success:false,
-                message: "All details are not filled"
-            })
+        if (!parsedData.success) {
+            return res.status(411).json({
+                success: false,
+                message: "Zod validation Failed"
+            });
         }
+
+        const {
+            email, password
+        } = parsedData.data
 
         //Check in the Database wther user is present or not
         const user = await User.findOne({email})
@@ -109,10 +108,8 @@ exports.login = async (req: Request,res: Response)=>{
             return res.status(401).json({
                 success:false,
                 message: "Wrong Password"
-                
             })
         }
-        
     }
     catch(error){
         console.log(error)

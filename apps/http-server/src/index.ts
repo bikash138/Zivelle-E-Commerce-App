@@ -1,11 +1,13 @@
 import express from "express"
 import cors from 'cors'
 import { dbConnect } from "./config/database"
+import cookieParser from 'cookie-parser'
+import userRoutes from "./routes/user"
 // const userRoutes = require("./routes/user")
 // const productRoutes = require("./routes/product")
 // const { cloudinaryConnect } = require("./config/cloudinary")
 // const fileUpload = require("express-fileupload")
-// const cookieParser = require("cookie-parser")
+
 
 const app = express();
 
@@ -22,7 +24,7 @@ app.use(cors({
     credentials: true
 }))
 app.use(express.json())
-// app.use(cookieParser())
+app.use(cookieParser())
 
 //To upload files
 // app.use(fileUpload({
@@ -33,8 +35,8 @@ app.use(express.json())
 //Connecting To Cloudinary
 // cloudinaryConnect();
 
-//Routes
-// app.use("/api/v1/auth", userRoutes)
+// Routes
+app.use("/api/v1/auth", userRoutes)
 // app.use("/api/v1/product", productRoutes)
 
 
