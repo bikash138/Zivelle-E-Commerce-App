@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import { RequestHandler } from "express"
 import jwt from "jsonwebtoken"
 import {SignInSchema, SignUpSchema } from "@repo/types/zodTypes"
+import Seller from "../models/Seller"
 
 export const signUp: RequestHandler = async (req, res) => {
     try {
@@ -15,7 +16,7 @@ export const signUp: RequestHandler = async (req, res) => {
             return;
         }
         const {
-            email, firstName, lastName, password, confirmPassword
+            email, firstName, lastName, password
         } = parsedData.data;
 
         //Check if User already exists
@@ -32,7 +33,7 @@ export const signUp: RequestHandler = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         //create the User
-        const user = await User.create({
+        const user = await Seller.create({
             firstName,
             lastName,
             email,
